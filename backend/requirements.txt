@@ -1,0 +1,26 @@
+# FastAPI та сервер
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Pydantic v2
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+email-validator>=2.0.0  # Для EmailStr валідації
+
+# MongoDB (async)
+motor==3.3.2
+pymongo==4.6.0
+
+# Автентифікація
+python-jose[cryptography]==3.3.0
+bcrypt>=4.0.0  # Використовуємо напряму замість passlib для сумісності
+python-dotenv==1.0.0
+
+# Логування
+loguru==0.7.2
+
+# Утиліти
+httpx==0.25.2  # Для тестування API
+tenacity==8.2.3  # Retry-логіка
+
