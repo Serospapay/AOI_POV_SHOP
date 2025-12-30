@@ -8,9 +8,11 @@ export interface Product {
   description: string;
   price: number;
   image_url?: string;
-  capacity: number; // мАг
-  power: number; // Вт
-  battery_type: string; // Li-Ion, Li-Po, etc
+  capacity?: number; // мАг
+  power?: number; // Вт
+  battery_type?: string; // Li-Ion, Li-Po, etc
+  brand?: string;
+  category?: string;
   weight?: number;
   dimensions?: string;
   stock: number;
@@ -19,6 +21,8 @@ export interface Product {
   rating_count: number; // Кількість оцінок
   created_at: string;
   updated_at: string;
+  charge_cycles?: number; // Для калькулятора
+  estimated_charge_time?: number; // Для калькулятора
 }
 
 export interface ProductFilters {

@@ -118,14 +118,23 @@ async def delete_review(
 @router.get("/admin/pending")
 async def get_pending_reviews(
     limit: int = Query(50, ge=1, le=100),
+    all_reviews: bool = Query(False, description="Показати всі відгуки, не тільки на модерацію"),
     current_admin: TokenData = Depends(get_current_admin),
     review_service: ReviewService = Depends(get_review_service),
 ):
     """
-    Отримує відгуки, які потребують модерації.
+    Отримує відгуки для модерації.
     Тільки для адміністраторів.
+    Якщо all_reviews=True, повертає всі відгуки.
     """
-    reviews = await review_service.get_pending_reviews(limit=limit)
+    if all_reviews:
+        # Отримуємо всі відгуки
+        db = review_service.db
+        reviews_raw = await db.reviews.find({}).sort("created_at", -1).limit(limit).to_list(length=limit)
+        reviews = [review_service._serialize_review(r) for r in reviews_raw]
+    else:
+        # Тільки відгуки на модерацію
+        reviews = await review_service.get_pending_reviews(limit=limit)
     return JSONResponse(content=reviews)
 
 

@@ -92,7 +92,7 @@ async def health_check():
 
 
 # Підключаємо роути для API v1
-from app.api.v1 import auth, products, search, orders, admin, reviews
+from app.api.v1 import auth, products, search, orders, admin, reviews, calculator
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
@@ -100,4 +100,5 @@ app.include_router(search.router, prefix="/api/v1")
 app.include_router(orders.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(reviews.router, prefix="/api/v1")
+app.include_router(calculator.router, prefix="/api/v1")
 

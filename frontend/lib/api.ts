@@ -28,29 +28,45 @@ async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<T> {
   // Визначаємо правильний базовий URL залежно від середовища
-  const resolveApiBaseUrl = () => {
-    // У браузері ЗАВЖДИ використовуємо localhost (або явний URL з env)
+  const resolveApiBaseUrl = (): string => {
+    // У браузері (клієнтська частина) ЗАВЖДИ використовуємо localhost
     // Браузер не може підключитися до Docker hostname 'backend'
     if (typeof window !== 'undefined') {
-      const browserUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      // Якщо env містить Docker hostname, замінюємо на localhost для браузера
-      if (browserUrl.includes('backend:') || browserUrl.includes('backend')) {
-        return 'http://localhost:8000';
-      }
-      return browserUrl;
+      return 'http://localhost:8000';
     }
     
-    // На сервері (SSR) у Docker використовуємо сервіс backend
+    // На сервері (SSR) у Docker контейнері використовуємо Docker service name
+    // Перевіряємо чи є змінна оточення, яка вказує на Docker network
+    // Якщо NEXT_PUBLIC_API_URL містить 'backend:', використовуємо її
     const envUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    if (envUrl) {
+      // Якщо env URL містить 'backend:', це Docker network - використовуємо як є
+      if (envUrl.includes('backend:')) {
+        return envUrl;
+      }
+      // Якщо env URL містить 'localhost', це для браузера - на SSR використовуємо backend:
+      if (envUrl.includes('localhost')) {
+        return 'http://backend:8000';
+      }
       return envUrl;
     }
+    
+    // За замовчуванням для SSR у Docker використовуємо Docker service name
     return 'http://backend:8000';
   };
 
   const baseUrl = resolveApiBaseUrl();
   
   const url = `${baseUrl}${endpoint}`;
+  
+  // Логування тільки в режимі розробки
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[API] ${options.method || 'GET'} ${url}`, {
+      isBrowser: typeof window !== 'undefined',
+      baseUrl,
+      endpoint,
+    });
+  }
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -65,13 +81,29 @@ async function fetchApi<T>(
     }
   }
   
+  // Створюємо AbortController для timeout (сумісність з усіма браузерами)
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  let timeoutId: NodeJS.Timeout | null = null;
+  
+  if (controller) {
+    timeoutId = setTimeout(() => {
+      controller!.abort();
+    }, 30000); // 30 секунд timeout
+  }
+  
   const config: RequestInit = {
     ...options,
     headers,
+    signal: controller?.signal || options.signal,
   };
 
   try {
     const response = await fetch(url, config);
+    
+    // Очищаємо timeout якщо запит успішний
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       let errorData: ApiError;
@@ -93,6 +125,11 @@ async function fetchApi<T>(
 
     return await response.json();
   } catch (error) {
+    // Очищаємо timeout при помилці
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
     if (error instanceof ApiClientError) {
       throw error;
     }
@@ -108,12 +145,17 @@ async function fetchApi<T>(
       errorMessage.includes('NetworkError') ||
       errorMessage.includes('Network request failed') ||
       errorMessage.includes('ERR_CONNECTION_REFUSED') ||
-      errorMessage.includes('ERR_NETWORK')
+      errorMessage.includes('ERR_NETWORK') ||
+      errorMessage.includes('AbortError') ||
+      errorMessage.includes('timeout')
     ) {
+      const isBrowser = typeof window !== 'undefined';
+      const suggestedUrl = isBrowser ? 'http://localhost:8000' : 'http://backend:8000';
+      
       throw new ApiClientError(0, {
-        message: `Не вдалося підключитися до сервера. Перевірте, чи запущений бекенд на ${baseUrl}`,
+        message: `Не вдалося підключитися до сервера. Перевірте, чи запущений бекенд на ${suggestedUrl}`,
         type: 'NetworkError',
-        detail: 'Можливі причини: бекенд не запущений, неправильний URL, або проблема з мережею',
+        detail: `Використано URL: ${baseUrl}. ${isBrowser ? 'Браузер' : 'SSR'} запит. Можливі причини: бекенд не запущений, неправильний URL, або проблема з мережею.`,
       });
     }
     

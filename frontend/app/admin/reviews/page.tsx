@@ -28,7 +28,8 @@ export default function ReviewsModerationPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await get<Review[]>(API_ENDPOINTS.admin.pendingReviews);
+      // Завантажуємо всі відгуки для адмін панелі
+      const data = await get<Review[]>(`${API_ENDPOINTS.admin.pendingReviews}?all_reviews=true`);
       setReviews(data);
     } catch (err: any) {
       setError(err.message || 'Помилка завантаження відгуків');
@@ -81,11 +82,11 @@ export default function ReviewsModerationPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Модерація відгуків</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Управління відгуками</h1>
           <p className="text-gray-400">
             {reviews.length > 0 
-              ? `${reviews.length} відгуків потребують модерації`
-              : 'Всі відгуки змодеровано'}
+              ? `Всього відгуків: ${reviews.length}`
+              : 'Відгуків не знайдено'}
           </p>
         </div>
 
@@ -103,7 +104,7 @@ export default function ReviewsModerationPage() {
         {reviews.length === 0 && !loading && (
           <Card variant="glass" className="border-2">
             <CardContent className="pt-6 text-center py-16">
-              <p className="text-gray-400 text-lg">Всі відгуки змодеровано</p>
+              <p className="text-gray-400 text-lg">Відгуків не знайдено</p>
             </CardContent>
           </Card>
         )}
@@ -137,9 +138,20 @@ export default function ReviewsModerationPage() {
                       <div className="mb-2">
                         <StarRating rating={review.rating} size="sm" />
                       </div>
-                      <p className="text-sm text-gray-300 mt-2">
-                        Товар ID: <span className="font-mono text-xs">{review.product_id}</span>
-                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <p className="text-sm text-gray-300">
+                          Товар ID: <span className="font-mono text-xs">{review.product_id}</span>
+                        </p>
+                        {review.is_approved ? (
+                          <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400">
+                            Схвалено
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400">
+                            На модерації
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -149,22 +161,36 @@ export default function ReviewsModerationPage() {
                   </p>
                   
                   <div className="flex gap-3 pt-4 border-t border-white/10">
-                    <Button
-                      onClick={() => handleModerate(review.id, true)}
-                      disabled={moderatingId === review.id}
-                      variant="primary"
-                      className="flex-1"
-                    >
-                      Схвалити
-                    </Button>
-                    <Button
-                      onClick={() => handleModerate(review.id, false)}
-                      disabled={moderatingId === review.id}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      Відхилити
-                    </Button>
+                    {!review.is_approved && (
+                      <>
+                        <Button
+                          onClick={() => handleModerate(review.id, true)}
+                          disabled={moderatingId === review.id}
+                          variant="primary"
+                          className="flex-1"
+                        >
+                          Схвалити
+                        </Button>
+                        <Button
+                          onClick={() => handleModerate(review.id, false)}
+                          disabled={moderatingId === review.id}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          Відхилити
+                        </Button>
+                      </>
+                    )}
+                    {review.is_approved && (
+                      <Button
+                        onClick={() => handleModerate(review.id, false)}
+                        disabled={moderatingId === review.id}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Відкликати схвалення
+                      </Button>
+                    )}
                     <Button
                       onClick={() => handleDelete(review.id)}
                       disabled={moderatingId === review.id}

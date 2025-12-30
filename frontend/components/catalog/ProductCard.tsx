@@ -26,14 +26,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
     );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      whileHover={{ scale: 1.01 }}
-      className="h-full"
-    >
-      <Card hover className="h-full flex flex-col overflow-hidden">
+    <Card hover className="h-full flex flex-col overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        whileHover={{ scale: 1.01 }}
+        className="h-full flex flex-col"
+      >
         <Link href={`/product/${product.id}`} className="flex-1 flex flex-col">
           {/* Image - компактна */}
           <div className="relative w-full h-40 rounded-t-xl overflow-hidden bg-white border-b border-white/10">
@@ -91,6 +91,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               className="w-full text-sm h-8"
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onAddToCart(product);
               }}
               disabled={product.stock === 0}
@@ -99,8 +100,8 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             </Button>
           </div>
         )}
-      </Card>
-    </motion.div>
+      </motion.div>
+    </Card>
   );
 }
 

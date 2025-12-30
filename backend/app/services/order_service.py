@@ -122,19 +122,35 @@ class OrderService:
     def _serialize_order(order: dict) -> dict:
         """
         Конвертує Mongo документ у серіалізований dict з id та iso-датами.
+        Рекурсивно конвертує всі ObjectId в рядки.
         """
         if not order:
             return order
 
-        serialized = dict(order)
-
-        if "_id" in serialized:
-            serialized["id"] = str(serialized["_id"])
-            del serialized["_id"]
-
-        for dt_key in ("created_at", "updated_at"):
-            if dt_key in serialized and isinstance(serialized[dt_key], datetime):
-                serialized[dt_key] = serialized[dt_key].isoformat()
+        serialized = {}
+        
+        for key, value in order.items():
+            # Обробляємо _id окремо - конвертуємо в id
+            if key == "_id":
+                serialized["id"] = str(value)
+            # Обробляємо datetime
+            elif isinstance(value, datetime):
+                serialized[key] = value.isoformat()
+            # Обробляємо ObjectId (якщо залишився десь)
+            elif isinstance(value, ObjectId):
+                serialized[key] = str(value)
+            # Обробляємо вкладені dict (наприклад, address)
+            elif isinstance(value, dict):
+                serialized[key] = OrderService._serialize_order(value)
+            # Обробляємо списки (наприклад, items)
+            elif isinstance(value, list):
+                serialized[key] = [
+                    OrderService._serialize_order(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            # Всі інші типи залишаємо як є
+            else:
+                serialized[key] = value
         
         # Забезпечуємо наявність полів
         serialized["items_total"] = serialized.get("items_total", serialized.get("total_amount", 0))

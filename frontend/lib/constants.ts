@@ -41,5 +41,9 @@ export const API_ENDPOINTS = {
     update: (id: string) => `${API_V1_BASE}/reviews/${id}`,
     delete: (id: string) => `${API_V1_BASE}/reviews/${id}`,
   },
+  calculator: {
+    powerBank: `${API_V1_BASE}/calculator/power-bank`,
+    ups: `${API_V1_BASE}/calculator/ups`,
+  },
 } as const;
 

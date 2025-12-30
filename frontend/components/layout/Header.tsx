@@ -31,6 +31,7 @@ export function Header() {
 
   const navLinks = [
     { href: '/catalog', label: 'Каталог' },
+    { href: '/calculator', label: 'Калькулятор' },
     { href: '/about', label: 'Про нас' },
     { href: '/contacts', label: 'Контакти' },
   ];
@@ -68,7 +69,7 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
+              {navLinks.filter(link => link.href !== '/calculator').map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -98,6 +99,25 @@ export function Header() {
 
             {/* Actions */}
             <div className="flex items-center gap-2 md:gap-4">
+              {/* Calculator Button */}
+              <Link href="/calculator">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative px-3 md:px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                    isActive('/calculator')
+                      ? 'bg-primary/20 text-primary border border-primary/30'
+                      : 'hover:bg-white/5 text-foreground hover:text-primary border border-transparent'
+                  }`}
+                  aria-label="Калькулятор"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="hidden md:inline text-sm font-medium">Калькулятор</span>
+                </motion.button>
+              </Link>
+
               {/* Search Button (Mobile) */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
@@ -246,7 +266,7 @@ export function Header() {
                 className="md:hidden overflow-hidden border-t border-white/10"
               >
                 <div className="py-4 space-y-2">
-                  {navLinks.map((link) => (
+                  {navLinks.filter(link => link.href !== '/calculator').map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -260,6 +280,21 @@ export function Header() {
                       {link.label}
                     </Link>
                   ))}
+                  {/* Calculator Button для мобільного меню */}
+                  <Link
+                    href="/calculator"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                      isActive('/calculator')
+                        ? 'text-primary bg-primary/10'
+                        : 'text-foreground hover:text-primary hover:bg-white/5'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Калькулятор</span>
+                  </Link>
                   {!isAuthenticated && (
                     <>
                       <Link
